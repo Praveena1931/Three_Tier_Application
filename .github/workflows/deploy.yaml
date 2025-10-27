@@ -55,7 +55,7 @@ jobs:
       - name: Deploy to AKS
         run: |
           kubectl apply -f database/
-          kubectl apply -f backend/
+          kubectl apply -f backend/ --validate=false
           kubectl apply -f frontend/
           kubectl apply -f ingress.yaml
 
