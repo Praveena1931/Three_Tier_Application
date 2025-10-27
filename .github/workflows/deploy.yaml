@@ -1,0 +1,65 @@
+name: Build and Deploy to AKS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  FRONTEND_IMAGE: ${{ secrets.ACR_NAME }}.azurecr.io/frontend
+  BACKEND_IMAGE: ${{ secrets.ACR_NAME }}.azurecr.io/backend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # - name: Set up Docker login to ACR
+      #   run: |
+      #     az acr login --name ${{ secrets.ACR_NAME }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t praveena31:latest ./frontend
+          docker push praveena31:latest
+
+      - name: Build and Push Backend Image
+        run: |
+          docker build -t praveena31:latest ./backend
+          docker push praveena31:latest
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} --name ${{ secrets.AKS_CLUSTER_NAME }} --overwrite-existing
+
+      - name: Update Kubernetes manifests
+        run: |
+          sed -i "s|praveena31/frontend:latest|praveena31:latest|g" ./frontend/deployment.yaml
+          sed -i "s|praveena31/backend:latest|praveena31:latest|g" ./backend/deployment.yaml
+
+      - name: Deploy to AKS
+        run: |
+          kubectl apply -f database/
+          kubectl apply -f backend/
+          kubectl apply -f frontend/
+          kubectl apply -f ingress.yaml
+
+      - name: Verify Deployment
+        run: |
+          kubectl get pods -o wide
+          kubectl get svc
