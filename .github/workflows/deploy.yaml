@@ -35,13 +35,13 @@ jobs:
 
       - name: Build and Push Frontend Image
         run: |
-          docker build -t praveena31:latest ./frontend
-          docker push praveena31:latest
+          docker build -t praveena31/frontend:latest ./frontend
+          docker push praveena31/frontend:latest
 
       - name: Build and Push Backend Image
         run: |
-          docker build -t praveena31:latest ./backend
-          docker push praveena31:latest
+          docker build -t praveena31/backend:latest ./backend
+          docker push praveena31/backend:latest
 
       - name: Get AKS Credentials
         run: |
